@@ -73,3 +73,26 @@ export const getRegionStatus = (regionId: string): RegionStatus => {
   };
 };
 
+export interface RegionDebugFacts {
+  region_id: string;
+  current_alert_active: boolean;
+  last_alert_timestamp_utc: string | null;
+  official_release_detected: boolean;
+  data_valid: boolean;
+  fetched_at_utc: string | null;
+}
+
+export const getRegionDebugFacts = (regionId: string): RegionDebugFacts => {
+  const now = new Date();
+  const { inputs, timestampUtc } = buildInputsForRegion(regionId, now);
+
+  return {
+    region_id: regionId,
+    current_alert_active: inputs.current_alert_active,
+    last_alert_timestamp_utc: inputs.last_alert_timestamp_utc,
+    official_release_detected: inputs.official_release_detected,
+    data_valid: inputs.data_valid,
+    fetched_at_utc: timestampUtc
+  };
+};
+
