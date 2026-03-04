@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "dev:clean": "powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"; tsx watch src/server.ts",
     "start": "node dist/server.js",
     "test": "vitest run"
   },
@@ -14,7 +15,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "fastify": "^5.7.4"
+    "fastify": "^5.7.4",
+    "fastify-print-routes": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

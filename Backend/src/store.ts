@@ -14,18 +14,52 @@ export interface RegionStatus extends StateOutput {
 const regionFacts = new Map<string, RegionFacts>();
 
 let lastDataSourceLabel = "unknown";
+let lastSnapshotFailed = false;
 
-export const applyOfficialSnapshot = (snapshot: OfficialSnapshot): void => {
+export const applyOfficialSnapshot = (
+  snapshot: OfficialSnapshot
+): string[] => {
   const { regions, fetchedAtUtc, dataSourceLabel } = snapshot;
 
   lastDataSourceLabel = dataSourceLabel;
+  lastSnapshotFailed = false;
+
+  const changedRegions: string[] = [];
 
   for (const region of regions) {
+    const previous = regionFacts.get(region.regionId);
+
+    const prevAlertActive = previous?.currentAlertActive ?? false;
+    const prevReleaseDetected = previous?.officialReleaseDetected ?? false;
+    const prevLastAlertTimestamp = previous?.lastAlertTimestampUtc ?? null;
+
+    let nextLastAlertTimestamp = prevLastAlertTimestamp;
+
+    if (!prevAlertActive && region.currentAlertActive) {
+      nextLastAlertTimestamp = fetchedAtUtc;
+    } else if (!prevReleaseDetected && region.officialReleaseDetected) {
+      nextLastAlertTimestamp = fetchedAtUtc;
+    }
+
+    if (
+      prevAlertActive !== region.currentAlertActive ||
+      prevReleaseDetected !== region.officialReleaseDetected
+    ) {
+      changedRegions.push(region.regionId);
+    }
+
     regionFacts.set(region.regionId, {
       ...region,
+      lastAlertTimestampUtc: nextLastAlertTimestamp,
       lastUpdatedUtc: fetchedAtUtc
     });
   }
+
+  return changedRegions;
+};
+
+export const markSnapshotFailure = (): void => {
+  lastSnapshotFailed = true;
 };
 
 const buildInputsForRegion = (
@@ -48,7 +82,7 @@ const buildInputsForRegion = (
 
   const lastUpdated = new Date(facts.lastUpdatedUtc);
   const ageMs = now.getTime() - lastUpdated.getTime();
-  const dataValid = ageMs <= STALE_AFTER_MS;
+  const dataValid = !lastSnapshotFailed && ageMs <= STALE_AFTER_MS;
 
   return {
     inputs: {

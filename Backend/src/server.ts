@@ -1,9 +1,11 @@
 import Fastify from "fastify";
+import fastifyPrintRoutes from "fastify-print-routes";
 import { HOST, PORT } from "./config/env";
 import { healthRoutes } from "./api/healthRoutes";
 import { regionsRoutes } from "./api/regionsRoutes";
 import { statusRoutes } from "./api/statusRoutes";
 import { debugRegionRoutes } from "./api/debugRegionRoutes";
+import { debugUpstreamRoutes } from "./api/debugUpstreamRoutes";
 import { startIngestionPoller } from "./ingestion";
 
 export const buildServer = () => {
@@ -11,10 +13,12 @@ export const buildServer = () => {
     logger: true
   });
 
+  void fastify.register(fastifyPrintRoutes);
   void fastify.register(healthRoutes);
   void fastify.register(regionsRoutes);
   void fastify.register(statusRoutes);
   void fastify.register(debugRegionRoutes);
+  void fastify.register(debugUpstreamRoutes);
 
   return fastify;
 };
